@@ -1,0 +1,3 @@
+data/
+*.tfrecords
+.ipynb_checkpoints/
