@@ -2,3 +2,4 @@ data/
 *.tfrecords
 .ipynb_checkpoints/
 MNIST_data/
+*.pyc
