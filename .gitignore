@@ -3,3 +3,4 @@ data/
 .ipynb_checkpoints/
 MNIST_data/
 *.pyc
+*ubyte.gz
