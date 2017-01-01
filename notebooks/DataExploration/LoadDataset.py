@@ -3,7 +3,6 @@
 
 # In[1]:
 
-import tensorflow as tf
 import os
 import random
 import pylab
