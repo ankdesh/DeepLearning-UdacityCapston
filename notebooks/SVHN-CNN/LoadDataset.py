@@ -14,12 +14,13 @@ from PIL import Image
 
 # In[3]:
 
-DATA_FOLDER = '/home/ankdesh/explore/DeepLearning-UdacityCapston/data/train_sample/'
+DATA_FOLDER = '/home/ankdesh/explore/DeepLearning-UdacityCapston/data/FullImageDataSet/train'
 
 
 # In[4]:
 
-IMG_SIZE = 100 # Side for each transformed Image
+IMG_WIDTH = 128 # Side for each transformed Image
+IMG_HEIGHT = 64
 IMG_DEPTH = 3 # RGB files
 
 
@@ -115,7 +116,7 @@ def getNextImage(dirName):
     for imgFile in allFileNames:
         img = Image.open(imgFile)
         labels = [int(x['label']) for x in train_data[os.path.split(imgFile)[1]]]
-        img = img.resize((IMG_SIZE,IMG_SIZE), resample = (Image.BILINEAR))
+        img = img.resize((IMG_WIDTH,IMG_HEIGHT), resample = (Image.BILINEAR))
         #my_img = tf.image.decode_png(imgFile)
         yield (np.asarray(img),labels)
 
