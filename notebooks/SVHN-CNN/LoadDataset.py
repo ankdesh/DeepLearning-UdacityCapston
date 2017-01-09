@@ -10,21 +10,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import glob
 from PIL import Image
+from tflearn.data_utils import pad_sequences 
 
-
-# In[3]:
-
-DATA_FOLDER = '/home/ankdesh/explore/DeepLearning-UdacityCapston/data/FullImageDataSet/train'
-
-
-# In[4]:
+DATA_FOLDER = '/home/ankdesh/explore/DeepLearning-UdacityCapston/data/train_sample'
 
 IMG_WIDTH = 128 # Side for each transformed Image
 IMG_HEIGHT = 64
 IMG_DEPTH = 3 # RGB files
-
-
-# In[5]:
 
 ''' Code from Hang_Yao at https://discussions.udacity.com/t/how-to-deal-with-mat-files/160657/5'''
 import h5py
@@ -99,15 +91,6 @@ class DigitStructFile:
         return self.fileMap
 
 
-# In[6]:
-
-matFile = os.path.join(DATA_FOLDER, 'digitStruct.mat')
-dsf = DigitStructFile(matFile)
-train_data = dsf.getAllDigitStructure_ByDigit()
-
-
-# In[8]:
-
 def getNumPngFiles(dirName):
     return len(glob.glob(dirName + '/*.png'))
 def getNextImage(dirName):
@@ -120,8 +103,20 @@ def getNextImage(dirName):
         #my_img = tf.image.decode_png(imgFile)
         yield (np.asarray(img),labels)
 
+# Returns tuple of images and a list of 
+def getDataSet(numDataPoints, maxDigits):
+    
+    matFile = os.path.join(DATA_FOLDER, 'digitStruct.mat')
+    dsf = DigitStructFile(matFile)
+    train_data = dsf.getAllDigitStructure_ByDigit()
+    
+    images = np.empty(shape=(numDataPoints, IMG_HEIGHT, IMG_WIDTH, 3))
+    digits = np.empty(shape=(numDataPoints, maxDigits))
 
-# In[ ]:
+    for idx in range(numDataPoints):
+        sample_point = getNextImage(DATA_FOLDER).next()
+        images[idx] = sample_point[0]
+        digits[idx] = pad_sequences(sample_point[1], maxlen = maxDigits) 
 
-
+    return (images, digits)
 
