@@ -90,12 +90,16 @@ class DigitStructFile:
             self.fileMap[pictDat[i]["name"]] = figures
         return self.fileMap
 
+matFile = os.path.join(DATA_FOLDER, 'digitStruct.mat')
+dsf = DigitStructFile(matFile)
+train_data = dsf.getAllDigitStructure_ByDigit()
+allFileNames = glob.glob(DATA_FOLDER + '/*.png')
+random.shuffle(allFileNames)
 
 def getNumPngFiles(dirName):
     return len(glob.glob(dirName + '/*.png'))
-def getNextImage(dirName):
-    allFileNames = glob.glob(dirName + '/*.png')
-    random.shuffle(allFileNames)
+def getNextImage():
+    # Images
     for imgFile in allFileNames:
         img = Image.open(imgFile)
         labels = [int(x['label']) for x in train_data[os.path.split(imgFile)[1]]]
@@ -104,19 +108,17 @@ def getNextImage(dirName):
         yield (np.asarray(img),labels)
 
 # Returns tuple of images and a list of 
-def getDataSet(numDataPoints, maxDigits):
-    
-    matFile = os.path.join(DATA_FOLDER, 'digitStruct.mat')
-    dsf = DigitStructFile(matFile)
-    train_data = dsf.getAllDigitStructure_ByDigit()
-    
+def getDataSet(numDataPoints, maxDigits):   
     images = np.empty(shape=(numDataPoints, IMG_HEIGHT, IMG_WIDTH, 3))
     digits = np.empty(shape=(numDataPoints, maxDigits))
 
+    genImage = getNextImage()
+    
     for idx in range(numDataPoints):
-        sample_point = getNextImage(DATA_FOLDER).next()
-        images[idx] = sample_point[0]
-        digits[idx] = pad_sequences(sample_point[1], maxlen = maxDigits) 
+        sample_point = genImage.next()
+        images[idx] = sample_point[0] 
+        # Use value 10.0 for blank
+        digits[idx] = pad_sequences([sample_point[1]], maxlen = maxDigits ,value = 10.0)  
 
     return (images, digits)
 
