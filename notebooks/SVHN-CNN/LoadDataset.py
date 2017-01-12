@@ -12,7 +12,7 @@ import glob
 from PIL import Image
 from tflearn.data_utils import pad_sequences 
 
-DATA_FOLDER = '/home/ankdesh/explore/DeepLearning-UdacityCapston/data/train_sample'
+DATA_FOLDER = '/home/ankdesh/explore/DeepLearning-UdacityCapston/data/train'
 
 IMG_WIDTH = 128 # Side for each transformed Image
 IMG_HEIGHT = 64
@@ -96,8 +96,8 @@ train_data = dsf.getAllDigitStructure_ByDigit()
 allFileNames = glob.glob(DATA_FOLDER + '/*.png')
 random.shuffle(allFileNames)
 
-def getNumPngFiles(dirName):
-    return len(glob.glob(dirName + '/*.png'))
+def getNumPngFiles():
+    return len(glob.glob(DATA_FOLDER + '/*.png'))
 def getNextImage():
     # Images
     for imgFile in allFileNames:
