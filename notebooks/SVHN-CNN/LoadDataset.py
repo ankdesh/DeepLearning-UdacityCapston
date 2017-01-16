@@ -16,7 +16,7 @@ DATA_FOLDER = '/home/ankdesh/explore/DeepLearning-UdacityCapston/data/train'
 
 IMG_WIDTH = 128 # Side for each transformed Image
 IMG_HEIGHT = 64
-IMG_DEPTH = 3 # RGB files
+IMG_DEPTH = 1 # RGB files
 
 ''' Code from Hang_Yao at https://discussions.udacity.com/t/how-to-deal-with-mat-files/160657/5'''
 import h5py
@@ -103,13 +103,13 @@ def getNextImage():
     for imgFile in allFileNames:
         img = Image.open(imgFile)
         labels = [int(x['label']) for x in train_data[os.path.split(imgFile)[1]]]
-        img = img.resize((IMG_WIDTH,IMG_HEIGHT), resample = (Image.BILINEAR))
+        img = img.resize((IMG_WIDTH,IMG_HEIGHT), resample = (Image.BILINEAR)).convert('L')
         #my_img = tf.image.decode_png(imgFile)
         yield (np.asarray(img),labels)
 
 # Returns tuple of images and a list of 
 def getDataSet(numDataPoints, maxDigits):   
-    images = np.empty(shape=(numDataPoints, IMG_HEIGHT, IMG_WIDTH, 3))
+    images = np.empty(shape=(numDataPoints, IMG_HEIGHT, IMG_WIDTH))
     digits = np.empty(shape=(numDataPoints, maxDigits))
 
     genImage = getNextImage()
