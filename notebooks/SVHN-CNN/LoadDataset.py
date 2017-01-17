@@ -14,8 +14,8 @@ from tflearn.data_utils import pad_sequences
 
 DATA_FOLDER = '/home/ankdesh/explore/DeepLearning-UdacityCapston/data/train'
 
-IMG_WIDTH = 128 # Side for each transformed Image
-IMG_HEIGHT = 64
+IMG_WIDTH = 64 # Side for each transformed Image
+IMG_HEIGHT = 32
 IMG_DEPTH = 1 # RGB files
 
 ''' Code from Hang_Yao at https://discussions.udacity.com/t/how-to-deal-with-mat-files/160657/5'''
@@ -122,3 +122,20 @@ def getDataSet(numDataPoints, maxDigits):
 
     return (images, digits)
 
+# Returns tuple of images and labels with given num of digits   
+def getFixedNumDigistsDataSet(numDataPoints, numDigits):
+    images = np.empty(shape=(numDataPoints, IMG_HEIGHT, IMG_WIDTH))
+    digits = np.empty(shape=(numDataPoints, numDigits))
+
+    genImage = getNextImage()
+    
+    idx = 0
+    for i in range(numDataPoints):
+        sample_point = genImage.next()
+        if len(sample_point[1]) == numDigits:
+            images[idx] = sample_point[0]
+            digits[idx] = sample_point[1]
+            idx += 1
+
+    return (images, digits)
+    
