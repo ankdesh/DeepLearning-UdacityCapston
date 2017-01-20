@@ -14,7 +14,7 @@ from tflearn.data_utils import pad_sequences
 
 DATA_FOLDER = '/home/ankdesh/explore/DeepLearning-UdacityCapston/data/train'
 
-IMG_WIDTH = 64 # Side for each transformed Image
+IMG_WIDTH = 32 # Side for each transformed Image
 IMG_HEIGHT = 32
 IMG_DEPTH = 1 # RGB files
 
@@ -80,7 +80,7 @@ class DigitStructFile:
             for j in range(len(pictDat[i]['height'])):
                figure = {}
                figure['height'] = pictDat[i]['height'][j]
-               figure['label']  = pictDat[i]['label'][j]
+               figure['label']  = int(pictDat[i]['label'][j])
                figure['left']   = pictDat[i]['left'][j]
                figure['top']    = pictDat[i]['top'][j]
                figure['width']  = pictDat[i]['width'][j]
@@ -103,13 +103,13 @@ def getNextImage():
     for imgFile in allFileNames:
         img = Image.open(imgFile)
         labels = [int(x['label']) for x in train_data[os.path.split(imgFile)[1]]]
-        img = img.resize((IMG_WIDTH,IMG_HEIGHT), resample = (Image.BILINEAR)).convert('L')
+        img = img.resize((IMG_WIDTH,IMG_HEIGHT))#.convert('L') #, resample = (Image.BILINEAR))
         #my_img = tf.image.decode_png(imgFile)
         yield (np.asarray(img),labels)
 
 # Returns tuple of images and a list of 
 def getDataSet(numDataPoints, maxDigits):   
-    images = np.empty(shape=(numDataPoints, IMG_HEIGHT, IMG_WIDTH))
+    images = np.empty(shape=(numDataPoints, IMG_HEIGHT, IMG_WIDTH,3))
     digits = np.empty(shape=(numDataPoints, maxDigits))
 
     genImage = getNextImage()
@@ -122,20 +122,24 @@ def getDataSet(numDataPoints, maxDigits):
 
     return (images, digits)
 
-# Returns tuple of images and labels with given num of digits   
+# Returns tuple of nums of datasetpoint, images and labels with given num of digits   
 def getFixedNumDigistsDataSet(numDataPoints, numDigits):
-    images = np.empty(shape=(numDataPoints, IMG_HEIGHT, IMG_WIDTH))
-    digits = np.empty(shape=(numDataPoints, numDigits))
+    images = np.empty(shape=(numDataPoints, IMG_HEIGHT, IMG_WIDTH, 3))
+    digits = np.empty(shape=(numDataPoints, numDigits),dtype = np.int8)
 
     genImage = getNextImage()
     
     idx = 0
-    for i in range(numDataPoints):
-        sample_point = genImage.next()
+    while idx < numDataPoints:
+        sample_point = next(genImage, None)
+        if sample_point == None:
+            break
         if len(sample_point[1]) == numDigits:
             images[idx] = sample_point[0]
             digits[idx] = sample_point[1]
             idx += 1
-
-    return (images, digits)
-    
+         
+    #open('/tmp/asd2.log','w').write(str(list(digits[0:idx])))
+    images.resize((idx,images.shape[1],images.shape[2],3))
+    digits.resize((idx,digits.shape[1]))
+    return (idx, images, digits)
