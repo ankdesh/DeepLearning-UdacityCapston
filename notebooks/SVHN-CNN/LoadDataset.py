@@ -14,9 +14,9 @@ from tflearn.data_utils import pad_sequences
 
 DATA_FOLDER = '/home/ankdesh/explore/DeepLearning-UdacityCapston/data/train'
 
-IMG_WIDTH = 32 # Side for each transformed Image
+IMG_WIDTH = 64 # Side for each transformed Image
 IMG_HEIGHT = 32
-IMG_DEPTH = 1 # RGB files
+IMG_DEPTH = 3 # RGB files
 
 ''' Code from Hang_Yao at https://discussions.udacity.com/t/how-to-deal-with-mat-files/160657/5'''
 import h5py
@@ -79,11 +79,11 @@ class DigitStructFile:
             figures = []
             for j in range(len(pictDat[i]['height'])):
                figure = {}
-               figure['height'] = pictDat[i]['height'][j]
                figure['label']  = int(pictDat[i]['label'][j])
-               figure['left']   = pictDat[i]['left'][j]
-               figure['top']    = pictDat[i]['top'][j]
-               figure['width']  = pictDat[i]['width'][j]
+               figure['height'] = int(pictDat[i]['height'][j])
+               figure['left']   = int(pictDat[i]['left'][j])
+               figure['top']    = int(pictDat[i]['top'][j])
+               figure['width']  = int(pictDat[i]['width'][j])
                if (figure['label'] == 10): # 0 in figure is represented as 10 in dataset files
                   figure['label'] = 0
                figures.append(figure)
@@ -103,13 +103,18 @@ def getNextImage():
     for imgFile in allFileNames:
         img = Image.open(imgFile)
         labels = [int(x['label']) for x in train_data[os.path.split(imgFile)[1]]]
-        img = img.resize((IMG_WIDTH,IMG_HEIGHT))#.convert('L') #, resample = (Image.BILINEAR))
+        bboxTop = min([int(x['top']) for x in train_data[os.path.split(imgFile)[1]]])
+        bboxLeft = min([int(x['left']) for x in train_data[os.path.split(imgFile)[1]]])
+        bboxBottom = max([int(x['top'] + x['height']) for x in train_data[os.path.split(imgFile)[1]]])
+        bboxRight = max([int(x['left'] + x['width']) for x in train_data[os.path.split(imgFile)[1]]])
+        img = img.crop ((bboxLeft, bboxTop, bboxRight, bboxBottom))
+        img = img.resize((IMG_WIDTH,IMG_HEIGHT), resample = (Image.BILINEAR))#.convert('L') #, resample = (Image.BILINEAR))
         #my_img = tf.image.decode_png(imgFile)
         yield (np.asarray(img),labels)
 
 # Returns tuple of images and a list of 
 def getDataSet(numDataPoints, maxDigits):   
-    images = np.empty(shape=(numDataPoints, IMG_HEIGHT, IMG_WIDTH,3))
+    images = np.empty(shape=(numDataPoints, IMG_HEIGHT, IMG_WIDTH, IMG_DEPTH))
     digits = np.empty(shape=(numDataPoints, maxDigits))
 
     genImage = getNextImage()
@@ -124,7 +129,7 @@ def getDataSet(numDataPoints, maxDigits):
 
 # Returns tuple of nums of datasetpoint, images and labels with given num of digits   
 def getFixedNumDigistsDataSet(numDataPoints, numDigits):
-    images = np.empty(shape=(numDataPoints, IMG_HEIGHT, IMG_WIDTH, 3))
+    images = np.empty(shape=(numDataPoints, IMG_HEIGHT, IMG_WIDTH, IMG_DEPTH))
     digits = np.empty(shape=(numDataPoints, numDigits),dtype = np.int8)
 
     genImage = getNextImage()
@@ -140,6 +145,7 @@ def getFixedNumDigistsDataSet(numDataPoints, numDigits):
             idx += 1
          
     #open('/tmp/asd2.log','w').write(str(list(digits[0:idx])))
-    images.resize((idx,images.shape[1],images.shape[2],3))
+    images.resize((idx,images.shape[1],images.shape[2], IMG_DEPTH))
     digits.resize((idx,digits.shape[1]))
     return (idx, images, digits)
+
