@@ -4,3 +4,4 @@ data/
 MNIST_data/
 *.pyc
 *ubyte.gz
+*.h5

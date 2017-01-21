@@ -12,7 +12,7 @@ import glob
 from PIL import Image
 from tflearn.data_utils import pad_sequences 
 
-DATA_FOLDER = '/home/ankdesh/explore/DeepLearning-UdacityCapston/data/train'
+DATA_FOLDER = '/home/ankdesh/explore/DeepLearning-UdacityCapston/data/train_sample'
 
 IMG_WIDTH = 64 # Side for each transformed Image
 IMG_HEIGHT = 32
@@ -149,3 +149,24 @@ def getFixedNumDigistsDataSet(numDataPoints, numDigits):
     digits.resize((idx,digits.shape[1]))
     return (idx, images, digits)
 
+def createHDF5FixedNumDigits(numDigits):
+    #images = np.empty(shape=(numDataPoints, IMG_HEIGHT, IMG_WIDTH, IMG_DEPTH))
+    #digits = np.empty(shape=(numDataPoints, numDigits),dtype = np.int8)
+
+    genImage = getNextImage()
+
+    images = []
+    digits = []
+    for sample_point in genImage:
+        if len(sample_point[1]) == numDigits:
+            images.append(sample_point[0])
+            digits.append(sample_point[1])
+
+    import h5py
+    fileName = 'svhn_' + str(numDigits) + '.h5'
+    h5f = h5py.File(fileName, 'w')
+    h5f.create_dataset('images', data=np.asarray(images))
+    h5f.create_dataset('digits', data=np.asarray(digits))
+    h5f.close()
+
+    #open('/tmp/asd2.log','w').write(str(list(digits[0:idx])))
