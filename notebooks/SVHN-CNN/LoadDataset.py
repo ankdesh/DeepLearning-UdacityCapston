@@ -12,9 +12,9 @@ import glob
 from PIL import Image
 from tflearn.data_utils import pad_sequences 
 
-DATA_FOLDER = '/home/ankdesh/explore/DeepLearning-UdacityCapston/data/train_sample'
+DATA_FOLDER = '/home/ankdesh/explore/DeepLearning-UdacityCapston/data/extra'
 
-IMG_WIDTH = 64 # Side for each transformed Image
+IMG_WIDTH = 32 # Side for each transformed Image
 IMG_HEIGHT = 32
 IMG_DEPTH = 3 # RGB files
 
@@ -108,7 +108,7 @@ def getNextImage():
         bboxBottom = max([int(x['top'] + x['height']) for x in train_data[os.path.split(imgFile)[1]]])
         bboxRight = max([int(x['left'] + x['width']) for x in train_data[os.path.split(imgFile)[1]]])
         img = img.crop ((bboxLeft, bboxTop, bboxRight, bboxBottom))
-        img = img.resize((IMG_WIDTH,IMG_HEIGHT), resample = (Image.BILINEAR))#.convert('L') #, resample = (Image.BILINEAR))
+        img = img.resize((IMG_WIDTH,IMG_HEIGHT), resample = (Image.BILINEAR)).convert('L') #, resample = (Image.BILINEAR))
         #my_img = tf.image.decode_png(imgFile)
         yield (np.asarray(img),labels)
 
