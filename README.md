@@ -28,3 +28,13 @@ Directory structure along with important files for the code looks is
 |-TFRecord (Abandoned code for creating TFRecord files - Now using HDF5 files instead)
 ```
 
+### Software/Libraries used
+
+- IPython notebook
+- Python 2.7
+- Tensorflow 0.11
+- TFLearn
+- Scikit Learn
+- Matplotlib
+- Numpy
+- H5
