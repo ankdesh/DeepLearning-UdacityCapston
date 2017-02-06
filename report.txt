@@ -1,148 +1,39 @@
-
-Capstone Project
-Machine Learning Engineer Nanodegree
-
-
-Definition
-Project Overview  
-
-This project aims at developing the skills for solving a Computer vision problem using Deep Learning approach. One of the problems in computer vision is to identify the digits and numbers from the images. This problem have a lot of practical applications from automated assistance for driving(reading speed limits etc.), vehicle localization based on surrounding images, extracting telephone number from visiting cards etc.
-
-The particular problem being worked on in this project is to identify the house numbers from the images taken from a vehicle on road. The dataset we are using is called “The Street View House Numbers (SVHN) Dataset” available at http://ufldl.stanford.edu/housenumbers/. This dataset has been created from images captured for Google street view. All the images have been hand labeled for the house number and a bounding box for individual digits. A few of the images from dataset looks are shown below.
-
-
-
-
-Problem Statement
-As discussed in the above section, given the images with house number from the dataset, the project aims to extract the house number automatically without human supervision. As the images show, the style, the orientation and texture of number is quite diverse, it requires a computer vision algorithm to recognise the numbers. Our approach is to use Deep learning technique called Convolution neural network (CNN) to automatically “learn” to discriminate the digits from the background (gates, lawns etc) and also to be able to put the digits in order to form a number.
-
-The system for achieving the goal of automatically recognizing digits consists of two phases on high level. First phase is “learning” phase, where use a statistical learning technique to learn some parameters for a model. Learning happens by first applying the input image and getting a prediction, the difference in the predicted and actual actual value is calculated using a loss function. This error is propagated back to the model to adjust its parameters. This process is applied iteratively multiple times which makes the parameters to converge to the values such that model can differentiate the images to generate correct label (to an extent). Then in the “inferencing” phase, we use the model with the learned parameters to predict the number in a given image.
-
-
-
-Learning phase
-
-
-Inferencing Phase
-
-
-
 Metrics
-To measure the performance of the learned model, we need to use a metric which gives measure of how different the predicted output of model is from the actual number in the images. Since most of the applications require the number to be completely correct to function appropriately, we use on 0-1 marking rule for a particular image i.e. if the prediction completely matches the real result, it is awarded 1 mark. In case the prediction is incorrect (even for a single digit), it is awarded 0 marks. We using this marking scheme over a large set of images and calculate the aggregated accuracy as 
 
-Accuracy  = (Sum of marks based on above scheme) / (Total number of test cases) 
-Analysis
-Data Visualization and Exploration
-Before starting the actual implementation and tuning of Convolutional Neural Networks, we looked at the various statistics and characteristics of the dataset. It includes the visualization of the dataset.
+Since the applications for reading house number would require the number to be correct completely, we need to use the metric which considers the result to be correct only when the model predits all the digits to be correct (and correct number of digits). Further, we did a histogram for the digits at each position in the house numbers and the digits seems to almost uniformly distributed. This suggests that accuracy will be an appropriate metric and we dont need to do for F1 score (or precition and recall).
 
-First step is to visually inspect the images and its labelled data. The code used to visualize the dataset is available in my github repo at ( https://goo.gl/6jDDZp ). 5 random images picked and visualized as
+To measure the performance of the learned model, we need to use a metric which gives measure of how different the predicted output of model is from the actual number in the images. We use on 0-1 marking rule for a particular image i.e. if the prediction completely matches the real result, it is awarded 1 mark. In case the prediction is incorrect (even for a single digit), it is awarded 0 marks. We using this marking scheme over a large set of images and calculate the aggregated accuracy as
 
+Accuracy = (Sum of marks based on above scheme) / (Total number of test cases)
 
+For example if the Following are the predicted and actual digits 
+| Predicted | Actual| Marks|
+| 123| 123 | 1 |
+| 125| 123 | 0 |
+| 12 | 123 | 0 |
+| 23 | 23  | 1 | 
 
-This shows the great variation in the texture, lighting conditions, width and height for the images. These variations make it harder to extract the numbers automatically. For CNNs, all the images are generally scaled to same width and height.
-
-To further visualize and find out what are the images which are harder to classify than the others, I implemented a simple classifier which works on the single digit dataset. The dataset is a collection of single digit cutouts from the original dataset and is available along with the SVHN dataset. The model used is a CNN implementation using Tensorflow library. The code is available at https://goo.gl/dVFviR. This code is derived from a sample examples available with tensorflow documentation. The CNN is a modest (3 conv layer + 1 fully connected layer) model, learned with Adagrad optimizer and learning rate of 0.01. We did not do any hyperparameter tuning for the model. This model uses softmax layer at the end to predict the class probabilities. If the model is able to assign a probability of more than 0.8 to a label for an image, we consider the image to be easy to classify else it is considered harder to classify. Following figure shows the difference in the hard to classify vs the other images.
-
-
-Images - hard to classify
-
-
-Images - easier to classify
-
-As shown above the hard to classify images are either if poor quality or too much blended in the background which can challenge even a human to classify the image correctly.
-
-Further, to investigate the attributes of the images and the labels in the dataset, we plotted histograms for length of numbers in label, width of the images and the height of the images. The code for this analysis is shared at (https://goo.gl/Yax9AE). Length of the numbers (number of digits in the number) directs helps to find the number of digits we should try to target to recognise from the images. As most of the images contain numbers with less than 4 digits (~99.7%), we will predict upto 4 digits only. 
+Accuracy = 2/4 = 0.5
 
 
 
 
-As shown in the histograms for width and height of images, there is appreciable variation in the values. However, in the both cases, the distribution has a central peak. Hence we would use the values at mean for both of quantities and resize all the images to the values. The mean for width and height for the images in dataset is - (128.3 and 57.2). Hence we resize all images to (128, 64).
-
-
-Synthetic Benchmark
-To get a feet about the nature of problem and how good the CNN can work on the problem, we created a synthetic data set using MNIST[1] dataset. This allows to create a dataset with numbers with controllable parameters (number of digits, presence of a blank in digits, variable/fixed size number images). Also this allows us to create arbitrary number of data samples to experiment with. The source code for generation of the dataset and its analysis is available at https://goo.gl/GbLB7m. 
-
-
-
-
-Sample generated images of width 2 and 3 respectively
-
-Above figures show the some of the randomly generated images with fixed width (2 and 3 digits resp.).
 Algorithms and Techniques
-Given the huge success of Convolutional Neural Network for image classification problems, it makes CNNs to be ideal choice for this problem. The architecture and hyperparameters for the model will be determined using experimentation using cross validations. 
+Given the huge success of Convolutional Neural Network for image classification problems, it
+makes CNNs to be ideal choice for this problem. The architecture and hyperparameters for the
+model will be determined using experimentation using cross validations.
 
-Following figure shows a sample CNN configuration used with synthetic dataset with fixed width of 2. The graph was created using Tensorflow’s visualization tool Tensorboard. The CNN configuration uses 2 set of (Conv, MaxPool and Normalization layers). The resulted tensor generated captures the “features” in the image which can be used to classify the digits. This tensor is fed to two separate sets of 2 layer deep-fully connected layers which use softmax activation with 10 classes. The Loss function captures cross entropy loss across the classes. Each “head” created with the help of these two layers are optimized independently using Adam Optimizer. 
+Convolutional neural networks are a class of neural networks where each neuron takes inputs from a fixed small window of neurons from previous layer, spatially located near each other. This helps each neuron to capture a arbitrary function of the features which are correlated spatially. One such example is images. Images have a high degree of spatial information. This is the reason CNNs have been extremely sucessful in image reated classification and regression tasks (all top entries in ImageNet competition are based on different architectures of CNNs. 
 
-
-
-Dataset consists of a set of input images which are converted to fixed size according to the statistics discussed in earlier section. The target value is provided as tuple of numpy ndarray where each ndarray at ith position in tuple represents the digit in the ith place in the target number. Each digit is converted to one-hot vector encoding to enable to calculate cross entropy for each digit separately. 
-
-
-
-Benchmark
-In this section, you will need to provide a clearly defined benchmark result or threshold for comparing across performances obtained by your solution. The reasoning behind the benchmark (in the case where it is not an established result) should be discussed. Questions to ask yourself when writing this section:
-Has some result or value been provided that acts as a benchmark for measuring performance?
-Is it clear how this result or value was obtained (whether by data or by hypothesis)?
-Methodology
-(approximately 3 - 5 pages)
-Data Preprocessing
-In this section, all of your preprocessing steps will need to be clearly documented, if any were necessary. From the previous section, any of the abnormalities or characteristics that you identified about the dataset will be addressed and corrected here. Questions to ask yourself when writing this section:
-If the algorithms chosen require preprocessing steps like feature selection or feature transformations, have they been properly documented?
-Based on the Data Exploration section, if there were abnormalities or characteristics that needed to be addressed, have they been properly corrected?
-If no preprocessing is needed, has it been made clear why?
-Implementation
+The typical type of layers involved in Convolution neural networks are 
+- Convolutional layers - These layers perform a 2D(or 3D) convolution over the layers and each convolution operation leads to the linear combination of spatially located neurons. We use 3X3 convolutional filters for these layers (based on VGG architecture) and its philosophy that 3X3 applied repeatedly in consecutive layers is effectively 5X5 and 7X7 kernels with more interleaved non-linearities[3].
+- Activation layers - These are layers which follow the convolution layers and introduce non-linearity to allow the system to capture non-linear relationships between neurons. We use ReLU activation layers which show a great performance without the diminishing gradient problems common in Sigmoidal and TanH functions. Thus allows deep models to be learned
+- Max Pooling layers - These layers do downsampling from the earlier activation layers by selecting a neron with highest activation value from the a typically 2X2 window. These layers help to reduce overfitting and reducing paramters and computational requirements for a model. 
+- Fully connected layers + Softmax layer - These layers are used for classification of the image based on the features it recieves from the complete network of earlier mentioned layers. In these layers, each neuron from a level is connected to every neuron from earlier layer. The activation generated by these fully connected layers is passed through a set of softmax neurons which maps the input activation to probability for each target class. We use the argmax of the probabalities to assign the class to the input image.
 
 
 
-In this section, the process for which metrics, algorithms, and techniques that you implemented for the given data will need to be clearly documented. It should be abundantly clear how the implementation was carried out, and discussion should be made regarding any complications that occurred during this process. Questions to ask yourself when writing this section:
-Is it made clear how the algorithms and techniques were implemented with the given datasets or input data?
-Were there any complications with the original metrics or techniques that required changing prior to acquiring a solution?
-Was there any part of the coding process (e.g., writing complicated functions) that should be documented?
-Refinement
-In this section, you will need to discuss the process of improvement you made upon the algorithms and techniques you used in your implementation. For example, adjusting parameters for certain models to acquire improved solutions would fall under the refinement category. Your initial and final solutions should be reported, as well as any significant intermediate results as necessary. Questions to ask yourself when writing this section:
-Has an initial solution been found and clearly reported?
-Is the process of improvement clearly documented, such as what techniques were used?
-Are intermediate and final solutions clearly reported as the process is improved?
-Results
-(approximately 2 - 3 pages)
-Model Evaluation and Validation
-In this section, the final model and any supporting qualities should be evaluated in detail. It should be clear how the final model was derived and why this model was chosen. In addition, some type of analysis should be used to validate the robustness of this model and its solution, such as manipulating the input data or environment to see how the model’s solution is affected (this is called sensitivity analysis). Questions to ask yourself when writing this section:
-Is the final model reasonable and aligning with solution expectations? Are the final parameters of the model appropriate?
-Has the final model been tested with various inputs to evaluate whether the model generalizes well to unseen data?
-Is the model robust enough for the problem? Do small perturbations (changes) in training data or the input space greatly affect the results?
-Can results found from the model be trusted?
-Justification
-In this section, your model’s final solution and its results should be compared to the benchmark you established earlier in the project using some type of statistical analysis. You should also justify whether these results and the solution are significant enough to have solved the problem posed in the project. Questions to ask yourself when writing this section:
-Are the final results found stronger than the benchmark result reported earlier?
-Have you thoroughly analyzed and discussed the final solution?
-Is the final solution significant enough to have solved the problem?
-Conclusion
-(approximately 1 - 2 pages)
-Free-Form Visualization
-In this section, you will need to provide some form of visualization that emphasizes an important quality about the project. It is much more free-form, but should reasonably support a significant result or characteristic about the problem that you want to discuss. Questions to ask yourself when writing this section:
-Have you visualized a relevant or important quality about the problem, dataset, input data, or results?
-Is the visualization thoroughly analyzed and discussed?
-If a plot is provided, are the axes, title, and datum clearly defined?
-Reflection
-In this section, you will summarize the entire end-to-end problem solution and discuss one or two particular aspects of the project you found interesting or difficult. You are expected to reflect on the project as a whole to show that you have a firm understanding of the entire process employed in your work. Questions to ask yourself when writing this section:
-Have you thoroughly summarized the entire process you used for this project?
-Were there any interesting aspects of the project?
-Were there any difficult aspects of the project?
-Does the final model and solution fit your expectations for the problem, and should it be used in a general setting to solve these types of problems?
-Improvement
-In this section, you will need to provide discussion as to how one aspect of the implementation you designed could be improved. As an example, consider ways your implementation can be made more general, and what would need to be modified. You do not need to make this improvement, but the potential solutions resulting from these changes are considered and compared/contrasted to your current solution. Questions to ask yourself when writing this section:
-Are there further improvements that could be made on the algorithms or techniques you used in this project?
-Were there algorithms or techniques you researched that you did not know how to implement, but would consider using if you knew how?
-If you used your final solution as the new benchmark, do you think an even better solution exists?
-Before submitting your report, ask yourself…
-Does the project report you’ve written follow a well-organized structure similar to that of the project template?
-Is each section (particularly Analysis and Methodology) written in a clear, concise and specific fashion? Are there any ambiguous terms or phrases that need clarification?
-Would the intended audience of your project be able to understand your analysis, methods, and results?
-Have you properly proof-read your project report to assure there are minimal grammatical and spelling mistakes?
-Are all the resources used for this project correctly cited and referenced?
-Is the code that implements your solution easily readable and properly commented?
-Does the code execute without error and produce results similar to those reported?
+[3] Simonyan, Karen, and Andrew Zisserman. "Very deep convolutional networks for large-scale image recognition." arXiv preprint arXiv:1409.1556 (2014).
 
-References
-[1] LeCun, L. Bottou, Y. Bengio, and P. Haffner. "Gradient-based learning applied to document recognition." Proceedings of the IEEE, 86(11):2278-2324, November 1998. 
+- Activation layer - 
 
