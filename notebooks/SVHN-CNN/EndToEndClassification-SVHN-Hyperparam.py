@@ -13,6 +13,7 @@ from tflearn.layers.estimator import regression
 import numpy as np
 import matplotlib.pyplot as plt
 import sklearn.utils
+from sklearn.model_selection import KFold
 import tensorflow as tf
 import h5py
 from tflearn.data_preprocessing import ImagePreprocessing
@@ -53,21 +54,6 @@ for numDigits in range(1,MAX_DIGITS + 1):
     labelsAll = np.concatenate((labelsAll, labels), axis = 0)
     numDigitsAll = np.concatenate((numDigitsAll, np.full(labels.shape[0], numDigits, dtype= float))) # Add num of digits for this set of images
 
-
-# In[6]:
-
-print (imgsAll.shape)
-print (labelsAll.shape)
-print (numDigitsAll.shape)
-
-
-# In[7]:
-
-print (labelsAll[100000])
-plt.imshow(imgsAll[100000], cmap='gray')
-print (numDigitsAll[100000])
-
-
 # In[8]:
 
 def dense_to_one_hot(labels_dense, num_classes=10):
@@ -89,96 +75,84 @@ Y = labelsAll
 
 # In[10]:
 
-#X, Y = sklearn.utils.shuffle(X, Y, random_state=0)
+X, Y = sklearn.utils.shuffle(X, Y, random_state=57)
 
 
 # In[11]:
 
-# Generate validation set
-ratio = 0.9 # Train/Test set
-randIdx = np.random.random(imgsAll.shape[0]) <= ratio
-#print (sum(map(lambda x: int(x), randIdx)))
-X_train = X[randIdx]
-Y_train = Y[randIdx]
-X_test = X[randIdx == False]
-Y_test = Y[randIdx == False]
-Y_train = [dense_to_one_hot(Y_train[:,idx], num_classes= 11) for idx in range(Y_train.shape[1])] 
-Y_test = [dense_to_one_hot(Y_test[:,idx], num_classes= 11) for idx in range(Y_test.shape[1])] 
-#del X, Y # release some space
-
-
-# In[12]:
-
-print (X_train.shape)
-print (Y_train[0].shape)
-
-
-# In[15]:
-
 # Building convolutional network
+kf = KFold(n_splits=3)
+countRun = 0
+for trainIdx, testIdx in kf.split(X):
+    countRun += 1
+    with tf.Graph().as_default():
+    
+        X_train = X[trainIdx]
+        Y_train = Y[trainIdx]
+        X_test = X[testIdx]
+        Y_test = Y[testIdx]
+        Y_train = [dense_to_one_hot(Y_train[:,idx], num_classes= 11) for idx in range(Y_train.shape[1])] 
+        Y_test = [dense_to_one_hot(Y_test[:,idx], num_classes= 11) for idx in range(Y_test.shape[1])] 
 
-# Building convolutional network
-for dropOutProb in [0.5, 0.7, 0.8, 0.9]: 
-    for optimizer in ['SGD', 'RMSProp', 'Adam']:
-        for learning_rate in [0.01, 0.001, 0.0001]: 
-            with tf.Graph().as_default():
-
-                # Real-time data preprocessing
-                img_prep = ImagePreprocessing()
-                img_prep.add_featurewise_zero_center()
-                img_prep.add_featurewise_stdnorm()
-
-                # Real-time data augmentation
-                img_aug = ImageAugmentation()
-                #img_aug.add_random_flip_leftright()
-                img_aug.add_random_rotation(max_angle=25.)
-                input = input_data(shape=[None, IMG_HEIGHT, IMG_WIDTH, IMG_DEPTH], name='input',
-                                                                            data_preprocessing=img_prep,
-                                                                            data_augmentation=img_aug)
-
-                # Building convolutional network
-                x = tflearn.conv_2d(input, 32, 3, activation='relu', name='conv1_1')
-                x = tflearn.conv_2d(x, 32, 3, activation='relu', name='conv1_2')
-                x = tflearn.max_pool_2d(x, 2, strides=2, name='maxpool1')
-                x = dropout(x, dropOutProb)
-
-
-                x = tflearn.conv_2d(x, 64, 3, activation='relu', name='conv2_1')
-                x = tflearn.conv_2d(x, 64, 3, activation='relu', name='conv2_2')
-                x = tflearn.max_pool_2d(x, 2, strides=2, name='maxpool2')
-                x = dropout(x, dropOutProb)
-
-
-                x = tflearn.conv_2d(x, 256, 3, activation='relu', name='conv3_1')
-                x = tflearn.conv_2d(x, 256, 3, activation='relu', name='conv3_2')
-                x = tflearn.conv_2d(x, 256, 3, activation='relu', name='conv3_3')
-                x = tflearn.max_pool_2d(x, 2, strides=2, name='maxpool3')
-                x = dropout(x, dropOutProb)
-
-                # Training heads
-                allHeads = []
-                for idx in range(MAX_DIGITS):
-                    fc = fully_connected(x, 1024, activation='tanh')
-                    fc = dropout(fc, dropOutProb)
-                    softmax = fully_connected(fc, 11, activation='softmax')
-                    networkOut = regression(softmax, optimizer=optimizer, learning_rate=learning_rate,
-                                 loss='categorical_crossentropy', name='target' + str(idx))
-                    allHeads.append(networkOut)
-
-                network = tflearn.merge(allHeads, mode='elemwise_sum')
-
-                model = tflearn.DNN(network, tensorboard_verbose=0)
-                feedTrainDict = {'target'+ str(i): Y_train[i] for i in range(MAX_DIGITS)}
-                #feedTrainDict = {'target0': Y_train[0]}
-                feedTestList =  [Y_test[i] for i in range(MAX_DIGITS)]
-                #feedTestList =  Y_test[0]
-                logDirName = 'EndToEndHyper/svhn_' + str(dropOutProb) + '_' + optimizer + '_' + str(learning_rate)
-                model.fit({'input': X_train}, feedTrainDict, shuffle = True,
-                          validation_set= (X_test, feedTestList), n_epoch=10, show_metric=True, snapshot_step=1000,
-                          run_id=logDirName)
+        dropOutProb = 0.7
+        optimizer = 'Adam'
+        learning_rate = 0.0001
+        # Real-time data preprocessing
+        img_prep = ImagePreprocessing()
+        img_prep.add_featurewise_zero_center()
+        img_prep.add_featurewise_stdnorm()
+    
+        # Real-time data augmentation
+        img_aug = ImageAugmentation()
+        #img_aug.add_random_flip_leftright()
+        img_aug.add_random_rotation(max_angle=25.)
+        input = input_data(shape=[None, IMG_HEIGHT, IMG_WIDTH, IMG_DEPTH], name='input',
+                                                                    data_preprocessing=img_prep,
+                                                                    data_augmentation=img_aug)
+    
+        # Building convolutional network
+        x = tflearn.conv_2d(input, 32, 3, activation='relu', name='conv1_1')
+        x = tflearn.conv_2d(x, 32, 3, activation='relu', name='conv1_2')
+        x = tflearn.max_pool_2d(x, 2, strides=2, name='maxpool1')
+        x = dropout(x, dropOutProb)
+    
+    
+        x = tflearn.conv_2d(x, 64, 3, activation='relu', name='conv2_1')
+        x = tflearn.conv_2d(x, 64, 3, activation='relu', name='conv2_2')
+        x = tflearn.max_pool_2d(x, 2, strides=2, name='maxpool2')
+        x = dropout(x, dropOutProb)
+    
+    
+        x = tflearn.conv_2d(x, 256, 3, activation='relu', name='conv3_1')
+        x = tflearn.conv_2d(x, 256, 3, activation='relu', name='conv3_2')
+        x = tflearn.conv_2d(x, 256, 3, activation='relu', name='conv3_3')
+        x = tflearn.max_pool_2d(x, 2, strides=2, name='maxpool3')
+        x = dropout(x, dropOutProb)
+    
+        # Training heads
+        allHeads = []
+        for idx in range(MAX_DIGITS):
+            fc = fully_connected(x, 1024, activation='tanh')
+            fc = dropout(fc, dropOutProb)
+            softmax = fully_connected(fc, 11, activation='softmax')
+            networkOut = regression(softmax, optimizer=optimizer, learning_rate=learning_rate,
+                         loss='categorical_crossentropy', name='target' + str(idx))
+            allHeads.append(networkOut)
+    
+        network = tflearn.merge(allHeads, mode='elemwise_sum')
+    
+        model = tflearn.DNN(network, tensorboard_verbose=0)
+        feedTrainDict = {'target'+ str(i): Y_train[i] for i in range(MAX_DIGITS)}
+        #feedTrainDict = {'target0': Y_train[0]}
+        feedTestList =  [Y_test[i] for i in range(MAX_DIGITS)]
+        #feedTestList =  Y_test[0]
+        logDirName = 'EndToEndFinal/svhn_' + str(dropOutProb) + '_' + optimizer + '_' + str(learning_rate) + '_' + str(countRun)
+        model.fit({'input': X_train}, feedTrainDict, shuffle = True,
+                  validation_set= (X_test, feedTestList), n_epoch=10, show_metric=True, snapshot_step=1000,
+                  run_id=logDirName)
 
 
-# In[ ]:
+
 
 
 
